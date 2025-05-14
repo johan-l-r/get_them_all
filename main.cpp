@@ -17,14 +17,25 @@ void draw(SDL_Renderer *master) {
 int main() {
   checkSubsystemStatus(SDL_INIT_VIDEO); 
 
+  bool isRunning = true;
+
   // Window stuff 
   unsigned const int WINDOW_WIDTH = 700;
   unsigned const int WINDOW_HEIGHT = 700;
 
-  bool isRunning = true;
+  // player stuff 
+  unsigned const int PLAYER_WIDTH = 50;
+  unsigned const int PLAYER_HEIGHT = 50;
+
+  float playerXPos = (WINDOW_WIDTH - PLAYER_WIDTH) / 2; 
+  float playerYPos = (WINDOW_HEIGHT - PLAYER_HEIGHT) / 2; 
+
+  float playerSpeed = 0.2;
 
   SDL_Window *window = NULL; 
   SDL_Renderer *renderer = NULL; 
+
+  SDL_FRect player; 
 
   window = SDL_CreateWindow(
     "Get'em all",
@@ -35,8 +46,14 @@ int main() {
 
   renderer = SDL_CreateRenderer(window, NULL);
 
+  player = {playerXPos, playerYPos, PLAYER_WIDTH, PLAYER_HEIGHT};
+
+
   while(isRunning) {
     SDL_Event event; 
+
+    // get currently pressed keys 
+    const bool* keys = SDL_GetKeyboardState(NULL);
 
     // check for "unlistened" events
     while(SDL_PollEvent(&event)) {
@@ -45,10 +62,18 @@ int main() {
       }
     }
 
-    // window background color 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    if (keys[SDL_SCANCODE_W]) player.y -= playerSpeed;
+    if (keys[SDL_SCANCODE_S]) player.y += playerSpeed;
+    if (keys[SDL_SCANCODE_A]) player.x -= playerSpeed;
+    if (keys[SDL_SCANCODE_D]) player.x += playerSpeed;
 
+    // set background color
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
+
+    // color for the player
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &player);
 
     SDL_RenderPresent(renderer);
   }
