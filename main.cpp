@@ -9,13 +9,6 @@ void checkSubsystemStatus(SDL_InitFlags subsystem) {
   }
 }
 
-void update() {
-
-}
-
-void draw(SDL_Renderer *master) {
-}
-
 int main() {
   checkSubsystemStatus(SDL_INIT_VIDEO); 
 
@@ -24,6 +17,15 @@ int main() {
   // Window stuff 
   unsigned const int WINDOW_WIDTH = 700;
   unsigned const int WINDOW_HEIGHT = 700;
+
+  SDL_Window *window = SDL_CreateWindow(
+    "Get'em all",
+    WINDOW_WIDTH, 
+    WINDOW_HEIGHT,
+    SDL_WINDOW_RESIZABLE
+  );
+
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
 
   // player stuff 
   unsigned const int PLAYER_WIDTH = 50;
@@ -35,24 +37,17 @@ int main() {
   float playerXPos = (WINDOW_WIDTH - PLAYER_WIDTH) / 2; 
   float playerYPos = (WINDOW_HEIGHT - PLAYER_HEIGHT) / 2; 
 
-  float playerSpeed = 0.05;
-
-  SDL_Window *window = NULL; 
-  SDL_Renderer *renderer = NULL; 
+  float playerSpeed = 500;
 
   SDL_FRect player; 
 
-  window = SDL_CreateWindow(
-    "Get'em all",
-    WINDOW_WIDTH, 
-    WINDOW_HEIGHT,
-    SDL_WINDOW_RESIZABLE
-  );
-
-  renderer = SDL_CreateRenderer(window, NULL);
-
   player = {playerXPos, playerYPos, PLAYER_WIDTH, PLAYER_HEIGHT};
 
+  // frame-rate independent movement stuff
+  Uint64 currentFrame = SDL_GetPerformanceCounter();
+  Uint64 lastFrame = 0;
+
+  double delta = 0;
 
   while(isRunning) {
     SDL_Event event; 
@@ -66,6 +61,12 @@ int main() {
         isRunning = false;
       }
     }
+    // UPDATE
+    lastFrame = currentFrame;
+    currentFrame = SDL_GetPerformanceCounter();
+
+    delta = (double)((currentFrame - lastFrame) * 1000) / (double)SDL_GetPerformanceFrequency();
+    delta /= 1000.0;
 
     if (keys[SDL_SCANCODE_W]) playerYDirection = -1;
     if (keys[SDL_SCANCODE_S]) playerYDirection = 1;
@@ -73,14 +74,14 @@ int main() {
     if (keys[SDL_SCANCODE_D]) playerXDirection = 1;
 
     // vector normalization
-		float magnitud = sqrt(pow(playerXDirection, 2) + pow(playerYDirection, 2));
+		float magnitude = sqrt(pow(playerXDirection, 2) + pow(playerYDirection, 2));
 
-    if(magnitud != 0) {
-      float normalizedX = playerXDirection / magnitud;
-      float normalizedY = playerYDirection / magnitud;
+    if(magnitude != 0) {
+      float normalizedX = playerXDirection / magnitude;
+      float normalizedY = playerYDirection / magnitude;
 
-      playerXPos += normalizedX * playerSpeed;
-      playerYPos += normalizedY * playerSpeed;
+      playerXPos += normalizedX * playerSpeed * delta;
+      playerYPos += normalizedY * playerSpeed * delta;
     }
 
     player.x = playerXPos;
@@ -90,6 +91,7 @@ int main() {
     playerXDirection = 0;
     playerYDirection = 0;
 
+    // DRAW
     // set background color
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
